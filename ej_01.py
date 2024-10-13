@@ -170,12 +170,22 @@ print("Fitness FINAL: ", mejor_individuo[1])
 
 #-------------------------------------------------------------
 
+
+
+def derivada_funcion_objetivo(x):
+    if x == 0:
+        return 0  # La derivada en x=0 puede ser considerada 0
+    else:
+        valor = -np.sin(np.sqrt(np.abs(x))) - (x * np.cos(np.sqrt(np.abs(x)))) / (2 * np.sqrt(np.abs(x))) *  np.sign(x)
+        return valor
+
+
 # Definimos la función de gradiente descendente
 def gradiente_descendente(x_inicial, tasa_aprendizaje, max_iteraciones):
     x_actual = x_inicial
     for iteracion in range(max_iteraciones):
         # Calcula el gradiente en la posición actual
-        gradiente = derivative(funcion_objetivo, x_actual, dx=1e-6)
+        gradiente = derivada_funcion_objetivo(x_actual)
 
         # Actualiza la posición
         x_nuevo = x_actual - tasa_aprendizaje * gradiente
@@ -189,11 +199,11 @@ def gradiente_descendente(x_inicial, tasa_aprendizaje, max_iteraciones):
     return x_actual, funcion_objetivo(x_actual)
 
 # Parámetros del algoritmo
-x_inicial = 1.0         # Valor inicial
+x_inicial = 100         # Valor inicial
 tasa_aprendizaje = 0.01 # Tasa de aprendizaje
 max_iteraciones = 1000    # Número máximo de iteraciones
 
-# Llamamos a la función de gradiente descendente
+#Se llama a la funcion gradidente, igual siempre cae en minimos locales y no llega al global
 resultado = gradiente_descendente(x_inicial, tasa_aprendizaje, max_iteraciones)
 
 # Mostramos el resultado final
