@@ -93,9 +93,9 @@ def cruce(padre1, padre2):
     # Elige un punto de corte aleatorio (ignora el bit de signo)
     punto_corte = np.random.randint(1, len(padre1[0]) - 1)
     # Hijo 1: parte inicial de padre1 + parte final de padre2
-    hijo1 = np.concatenate((padre1[0][:punto_corte], padre2[0][punto_corte:]))
+    hijo1 = np.concatenate((padre1[0][0:punto_corte], padre2[0][punto_corte:]))
     # Hijo 2: parte inicial de padre2 + parte final de padre1
-    hijo2 = np.concatenate((padre2[0][:punto_corte], padre1[0][punto_corte:]))
+    hijo2 = np.concatenate((padre2[0][0:punto_corte], padre1[0][punto_corte:]))
     return [hijo1, []], [hijo2, []]  # Devuelve los dos hijos con espacio para su fitness
 
 # Función de mutación para aplicar mutaciones a los individuos
@@ -190,8 +190,7 @@ def gradiente_descendente(x_inicial, tasa_aprendizaje, max_iteraciones):
         # Actualiza la posición
         x_nuevo = x_actual - tasa_aprendizaje * gradiente
         
-        # Opcional: imprime la iteración y el valor actual
-        print(f"Iteración {iteracion + 1}: x = {x_actual}, f(x) = {funcion_objetivo(x_actual)}")
+
 
         # Actualiza la posición actual
         x_actual = x_nuevo
