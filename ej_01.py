@@ -91,12 +91,14 @@ def seleccion_por_ventanas(poblacion, num_ventanas):
 # Función de cruce (crossover) que genera dos hijos por cada par de padres
 def cruce(padre1, padre2):
     # Elige un punto de corte aleatorio (ignora el bit de signo)
-    punto_corte = np.random.randint(1, len(padre1[0]) - 1)
-    # Hijo 1: parte inicial de padre1 + parte final de padre2
+    punto_corte = np.random.randint(1, len(padre1[0])-1)
+    # Hijo 1: parte inicial de padre1 (sin el bit de signo) + parte final de padre2
     hijo1 = np.concatenate((padre1[0][0:punto_corte], padre2[0][punto_corte:]))
-    # Hijo 2: parte inicial de padre2 + parte final de padre1
+   
+   # Hijo 2: parte inicial de padre2 (sin el bit de signo) + parte final de padre1
     hijo2 = np.concatenate((padre2[0][0:punto_corte], padre1[0][punto_corte:]))
-    return [hijo1, []], [hijo2, []]  # Devuelve los dos hijos con espacio para su fitness
+   
+    return [hijo1, []], [hijo2, []]
 
 # Función de mutación para aplicar mutaciones a los individuos
 def mutacion(individuo, prob_mutacion):

@@ -11,6 +11,67 @@ def bin2dec(x):
 def funcion_objetivo(x, y):
     return (x**2 + y**2)**0.25 * (np.sin(50 * (x**2 + y**2)**0.1)**2) + 1
 
+
+
+
+def derivada_funcion_objetivo(x, y):
+    r = x**2 + y**2
+    
+    # Manejo del caso donde r es cero
+    if r == 0:
+        return np.array([0.0, 0.0])  # Gradiente en (0,0) es 0 para ambos x e y
+
+    # Derivada parcial con respecto a x
+    dfx = (0.5 * x / r**0.75) * (np.sin(50 * r**0.1)**2) + \
+          (r**0.25) * (2 * np.sin(50 * r**0.1) * np.cos(50 * r**0.1) * 50 * (0.2 * x / r**0.9))
+    
+    # Derivada parcial con respecto a y
+    dfy = (0.5 * y / r**0.75) * (np.sin(50 * r**0.1)**2) + \
+          (r**0.25) * (2 * np.sin(50 * r**0.1) * np.cos(50 * r**0.1) * 50 * (0.2 * y / r**0.9))
+    
+    return np.array([dfx, dfy])
+
+
+# Definimos la función de gradiente descendente
+def gradiente_descendente(x_inicial,y_inicial ,tasa_aprendizaje, max_iteraciones):
+    x_actual = x_inicial
+    y_actual = y_inicial
+    for iteracion in range(max_iteraciones):
+        # Calcula el gradiente en la posición actual
+        gradiente = derivada_funcion_objetivo(x_actual,y_actual)
+
+        # Actualiza la posición
+        x_nuevo = x_actual - tasa_aprendizaje * gradiente[0]
+        y_nuevo = y_actual - tasa_aprendizaje * gradiente[1]
+        
+
+
+        # Actualiza la posición actual
+        x_actual = x_nuevo
+        y_actual=  y_nuevo
+    
+    return x_actual,y_actual, funcion_objetivo(x_actual,y_actual)
+
+
+# Parámetros del algoritmo
+x_inicial = 0         # Valor inicial
+y_inicial = 0         # Valor inicial
+tasa_aprendizaje = 0.01 # Tasa de aprendizaje
+max_iteraciones = 1000    # Número máximo de iteraciones
+
+#Se llama a la funcion gradidente, igual siempre cae en minimos locales y no llega al global
+resultado = gradiente_descendente(x_inicial,y_inicial,tasa_aprendizaje, max_iteraciones)
+
+# Mostramos el resultado final
+print("Resultado final:")
+print("x mínimo:", resultado[0])
+print("y mínimo:", resultado[1])
+print("Valor mínimo de la función:", resultado[2])
+
+
+
+
+
 # Genera un rango de valores para graficar la función en 3D
 x = np.linspace(-100, 100, 100)
 y = np.linspace(-100, 100, 100)
@@ -89,15 +150,15 @@ def cruce(padre1, padre2):
 
     # Hijo 1: combina la parte inicial de padre1 con la parte final de padre2
     hijo1 = [
-        np.concatenate((padre1[0][:punto_corte_x], padre2[0][punto_corte_x:])),  # Hijo X
-        np.concatenate((padre1[1][:punto_corte_y], padre2[1][punto_corte_y:])),  # Hijo Y
+        np.concatenate((padre1[0][0:punto_corte_x], padre2[0][punto_corte_x:])),  # Hijo X
+        np.concatenate((padre1[1][0:punto_corte_y], padre2[1][punto_corte_y:])),  # Hijo Y
         []  # Espacio para fitness
     ]
     
     # Hijo 2: combina la parte inicial de padre2 con la parte final de padre1
     hijo2 = [
-        np.concatenate((padre2[0][:punto_corte_x], padre1[0][punto_corte_x:])),  # Hijo X
-        np.concatenate((padre2[1][:punto_corte_y], padre1[1][punto_corte_y:])),  # Hijo Y
+        np.concatenate((padre2[0][0:punto_corte_x], padre1[0][punto_corte_x:])),  # Hijo X
+        np.concatenate((padre2[1][0:punto_corte_y], padre1[1][punto_corte_y:])),  # Hijo Y
         []  # Espacio para fitness
     ]
 
@@ -162,4 +223,8 @@ print("Mejor individuo:", mejor_individuo[0])
 print("Valor decimal X:", bin2dec(mejor_individuo[0][1:])) 
 print("Valor decimal Y:", bin2dec(mejor_individuo[1][1:])) 
 print("Fitness:", mejor_individuo[2]) 
+
+
+
+
 
