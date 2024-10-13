@@ -13,99 +13,7 @@ def funcion_objetivo(x, y):
 
 
 
-
-def derivada_funcion_objetivo(x, y):
-    r = x**2 + y**2
-    
-    # Manejo del caso donde r es cero
-    if r == 0:
-        return np.array([0.0, 0.0])  # Gradiente en (0,0) es 0 para ambos x e y
-
-    # Derivada parcial con respecto a x
-    dfx = (0.5 * x / r**0.75) * (np.sin(50 * r**0.1)**2) + \
-          (r**0.25) * (2 * np.sin(50 * r**0.1) * np.cos(50 * r**0.1) * 50 * (0.2 * x / r**0.9))
-    
-    # Derivada parcial con respecto a y
-    dfy = (0.5 * y / r**0.75) * (np.sin(50 * r**0.1)**2) + \
-          (r**0.25) * (2 * np.sin(50 * r**0.1) * np.cos(50 * r**0.1) * 50 * (0.2 * y / r**0.9))
-    
-    return np.array([dfx, dfy])
-
-
-# Definimos la función de gradiente descendente
-def gradiente_descendente(x_inicial,y_inicial ,tasa_aprendizaje, max_iteraciones):
-    x_actual = x_inicial
-    y_actual = y_inicial
-    for iteracion in range(max_iteraciones):
-        # Calcula el gradiente en la posición actual
-        gradiente = derivada_funcion_objetivo(x_actual,y_actual)
-
-        # Actualiza la posición
-        x_nuevo = x_actual - tasa_aprendizaje * gradiente[0]
-        y_nuevo = y_actual - tasa_aprendizaje * gradiente[1]
-        
-
-
-        # Actualiza la posición actual
-        x_actual = x_nuevo
-        y_actual=  y_nuevo
-    
-    return x_actual,y_actual, funcion_objetivo(x_actual,y_actual)
-
-
-# Parámetros del algoritmo
-x_inicial = 0         # Valor inicial
-y_inicial = 0         # Valor inicial
-tasa_aprendizaje = 0.01 # Tasa de aprendizaje
-max_iteraciones = 1000    # Número máximo de iteraciones
-
-#Se llama a la funcion gradidente, igual siempre cae en minimos locales y no llega al global
-resultado = gradiente_descendente(x_inicial,y_inicial,tasa_aprendizaje, max_iteraciones)
-
-# Mostramos el resultado final
-print("Resultado final:")
-print("x mínimo:", resultado[0])
-print("y mínimo:", resultado[1])
-print("Valor mínimo de la función:", resultado[2])
-
-
-
-
-
-# Genera un rango de valores para graficar la función en 3D
-x = np.linspace(-100, 100, 100)
-y = np.linspace(-100, 100, 100)
-X, Y = np.meshgrid(x, y)
-Z = funcion_objetivo(X, Y)  # Calcula la función objetivo en la cuadrícula
-
-# Crea el gráfico 3D
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(X, Y, Z, cmap='viridis')
-
-# Etiquetas y título
-ax.set_title('Gráfico 3D de la Función Objetivo')
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('f(X, Y)')
-
-plt.show()
-
-punto_inicial = [0.0, 0.0]
-
-def y(variables):
-    x, y = variables
-    return (x**2 + y**2)**0.25 * (np.sin(50 * (x**2 + y**2)**0.1)**2) + 1
-
-# Optimización para encontrar el mínimo
-resultado = minimize(y, punto_inicial)
-
-# Mostrar los resultados
-minimo_x, minimo_y = resultado.x
-minimo_valor = resultado.fun
-
-print(f'Mínimo encontrado en x = {minimo_x}, y = {minimo_y}, f(x, y) = {minimo_valor}')
-
+#---------------------FUNCION DE EVALUACION, FITNESS PARA CADA INDIVIDUO--------
 # Evalúa cada individuo en la población
 def evaluar_poblacion(poblacion):
     for i in range(len(poblacion)):
@@ -123,15 +31,20 @@ def evaluar_poblacion(poblacion):
         # Asigna el valor de la función fitness (invertido para minimizar)
         poblacion[i][2] = -funcion_objetivo(ind_decX, ind_decY)
 
+
+#---------------------SELECCION POR COMPETENCIA----------------------------------
 # Selección por competencia: selecciona los mejores K individuos de la población
 def seleccion_por_competencia(poblacion, k):
     seleccionados = []
     tam_poblacion = len(poblacion)
-    
+    competidores=[]
     while len(seleccionados) < tam_poblacion:
         # Selecciona k competidores de los índices de la población
+    
         indices_competidores = np.random.choice(len(poblacion), k, replace=False)
-        competidores = [poblacion[i] for i in indices_competidores]
+        for i in indices_competidores:
+            competidores.append(poblacion[i])
+        
         
         # Ordena los competidores por su fitness
         competidores_ordenados = sorted(competidores, key=lambda x: x[2])
@@ -140,8 +53,10 @@ def seleccion_por_competencia(poblacion, k):
         seleccionados.append(competidores_ordenados[0])
         seleccionados.append(competidores_ordenados[1])
     
-    return seleccionados[:tam_poblacion]  # Cortamos si seleccionamos más de tam_poblacion
+    return seleccionados #Retorna los seleccionados
 
+
+#---------------------CRUCE---------------------------------------------------
 # Función de cruce para generar dos hijos por cada par de padres
 def cruce(padre1, padre2):
     # Elegir un punto de corte aleatorio para cada individuo, ignora el bit de signo
@@ -164,7 +79,7 @@ def cruce(padre1, padre2):
 
     return hijo1, hijo2  # Retornar los hijos con espacio para fitness
 
-# Función de mutación
+#---------------------MUTACION----------------------------------
 def mutacion(individuo, prob_mutacion):
     for i in range(len(individuo[0])):
         # Si ocurre la mutación (con probabilidad prob_mutacion)
@@ -173,6 +88,8 @@ def mutacion(individuo, prob_mutacion):
             individuo[1][i] = 1 - individuo[1][i]  # Cambia el bit en y
     return individuo
 
+
+#---------------------INICIALIZACION DEL ALGORITMO----------------------------
 # Parámetros del algoritmo genético
 cant_bits = 8  # Número de bits que representa a cada individuo
 tam_poblacion = 100  # Tamaño de la población
@@ -214,10 +131,11 @@ for generacion in range(generaciones):
     # Reemplaza la población anterior con la nueva
     poblacion = nueva_poblacion
 
-    # Evalúa la nueva población
+    # Evalúa la nueva población, es decir le agrego su fitness a cada nuevo individuo
     evaluar_poblacion(poblacion)
 
-# Al final, podrías tener el mínimo global
+# Se obtiene el mejor individuo
+print("---------------------------------------")
 mejor_individuo = min(poblacion, key=lambda x: x[2])
 print("Mejor individuo:", mejor_individuo[0]) 
 print("Valor decimal X:", bin2dec(mejor_individuo[0][1:])) 
@@ -228,3 +146,83 @@ print("Fitness:", mejor_individuo[2])
 
 
 
+#------------------GRADIENTE DESCENDENTE----------------------------------
+
+#Derivada de la funcion objetivo segun CHATGPT
+def derivada_funcion_objetivo(x, y):
+    r = x**2 + y**2
+    
+    # Manejo del caso donde r es cero
+    if r == 0:
+        return np.array([0.0, 0.0])  # Gradiente en (0,0) es 0 para ambos x e y
+
+    # Derivada parcial con respecto a x
+    dfx = (0.5 * x / r**0.75) * (np.sin(50 * r**0.1)**2) + \
+          (r**0.25) * (2 * np.sin(50 * r**0.1) * np.cos(50 * r**0.1) * 50 * (0.2 * x / r**0.9))
+    
+    # Derivada parcial con respecto a y
+    dfy = (0.5 * y / r**0.75) * (np.sin(50 * r**0.1)**2) + \
+          (r**0.25) * (2 * np.sin(50 * r**0.1) * np.cos(50 * r**0.1) * 50 * (0.2 * y / r**0.9))
+    
+    return np.array([dfx, dfy])
+
+
+# Definimos la función de gradiente descendente
+def gradiente_descendente(x_inicial,y_inicial ,tasa_aprendizaje, max_iteraciones):
+    x_actual = x_inicial
+    y_actual = y_inicial
+    for iteracion in range(max_iteraciones):
+        # Calcula el gradiente en la posición actual
+        gradiente = derivada_funcion_objetivo(x_actual,y_actual)
+
+        # Actualiza la posición
+        x_nuevo = x_actual - tasa_aprendizaje * gradiente[0]
+        y_nuevo = y_actual - tasa_aprendizaje * gradiente[1]
+
+        # Actualiza la posición actual
+        x_actual = x_nuevo
+        y_actual=  y_nuevo
+    
+    return x_actual,y_actual, funcion_objetivo(x_actual,y_actual)
+
+
+#
+
+# Parámetros del algoritmo, siempre cae en un minimo local segun el x_inicial e y_inicial que ponga
+x_inicial = 100         # Valor inicial
+y_inicial = 100         # Valor inicial
+tasa_aprendizaje = 0.01 # Tasa de aprendizaje
+max_iteraciones = 1000    # Número máximo de iteraciones
+
+#Se llama a la funcion gradidente, igual siempre cae en minimos locales y no llega al global
+resultado = gradiente_descendente(x_inicial,y_inicial,tasa_aprendizaje, max_iteraciones)
+
+# Mostramos el resultado final
+print("---------------------------------------")
+print("Resultado final con el gradiente:")
+print("x mínimo:", resultado[0])
+print("y mínimo:", resultado[1])
+print("Valor mínimo de la función:", resultado[2])
+print("---------------------------------------")
+
+
+#------------------------GRAFICAR LA FUNCION------------------------------------------------------
+
+# Genera un rango de valores para graficar la función en 3D
+x = np.linspace(-100, 100, 100)
+y = np.linspace(-100, 100, 100)
+X, Y = np.meshgrid(x, y)
+Z = funcion_objetivo(X, Y)  # Calcula la función objetivo en la cuadrícula
+
+# Crea el gráfico 3D
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_surface(X, Y, Z, cmap='viridis')
+
+# Etiquetas y título
+ax.set_title('Gráfico 3D de la Función Objetivo')
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('f(X, Y)')
+
+plt.show()

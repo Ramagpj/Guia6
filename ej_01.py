@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random  # Importamos el módulo random de Python
-from scipy.misc import derivative
 
-# Convierte un arreglo binario en un número decimal
+
+#Pasar binario a decimal
 def bin2dec(x):
     return int(''.join(map(lambda x: str(int(x)), x)), 2)
 
@@ -11,43 +11,33 @@ def bin2dec(x):
 def funcion_objetivo(x):
     return -x * np.sin(np.sqrt(np.abs(x)))
 
-# Genera un rango de valores de -512 a 512 para graficar la función objetivo
-x1 = np.linspace(-512, 512, 1000)
-f1 = funcion_objetivo(x1)
-
-# Grafica la función objetivo para ver cómo se comporta
-plt.figure()
-plt.plot(x1, f1)
-plt.title("Función objetivo")
-plt.xlabel("x")
-plt.ylabel("f(x)")
-plt.grid()
-plt.show()
-
-
-
-# Evalúa cada individuo en la población
-# La población es una lista de individuos donde cada individuo es un arreglo binario con su fitness.
+#---------------------FUNCION DE EVALUACION, FITNESS PARA CADA INDIVIDUO--------
+# Evalúa cada individuo en la población, donde cada individuo es un arreglo binario, es decir le carga su correspondiente fitness al individuo
 def evaluar_poblacion(poblacion):
     for i in range(len(poblacion)):
-        # Convierte el individuo de binario a decimal, ignorando el primer bit (que es el signo)
+        # Convierte el individuo de binario a decimal, ignorando el primer bit (que es el del signo)
         ind_dec = bin2dec(poblacion[i][0][1:])
         # Si el primer bit es 1, el número es negativo
         if poblacion[i][0][0] == 1:
+            #Se multiplica con -1 para hacerlo negativo
             ind_dec = ind_dec * -1
         # Calcula el fitness del individuo y lo guarda (invertido para minimizar)
         poblacion[i][1] = -1 * funcion_objetivo(ind_dec)
 
+
+#---------------------SELECCION POR COMPETENCIA----------------------------------
 # Selección por competencia: selecciona los mejores K individuos de la población
 def seleccion_por_competencia(poblacion, k):
     seleccionados = []
+    competidores=[]
     tam_poblacion = len(poblacion)
 
     # Continua seleccionando hasta llenar el número de individuos de la población original
     while len(seleccionados) < tam_poblacion:
         # Selecciona aleatoriamente k competidores de la población
         indices_competidores = np.random.choice(len(poblacion), k, replace=False)
-        competidores = [poblacion[i] for i in indices_competidores]
+        for i in indices_competidores:
+            competidores.append(poblacion[i])
 
         # Ordena los competidores por su fitness (el mejor al principio)
         competidores_ordenados = sorted(competidores, key=lambda x: x[1])
@@ -56,9 +46,11 @@ def seleccion_por_competencia(poblacion, k):
         seleccionados.append(competidores_ordenados[0])
         seleccionados.append(competidores_ordenados[1])
 
-    # Devuelve la lista de seleccionados, limitada al tamaño original de la población
-    return seleccionados[:tam_poblacion]
+    # Devuelve la lista de seleccionados
+    return seleccionados
 
+
+#---------------------SELECCION POR VENTANA----------------------------------
 # Selección por ventanas: divide la población en ventanas y selecciona un individuo de cada ventana
 def seleccion_por_ventanas(poblacion, num_ventanas):
     # Ordenar la población según su fitness de menor a mayor (para minimizar)
@@ -83,32 +75,40 @@ def seleccion_por_ventanas(poblacion, num_ventanas):
         seleccionado = random.choice(ventana)
         seleccionados.append(seleccionado)
         
-        #Reduce el tamaño de la ventana en un 10% para la próxima iteración
+        #Reduce el tamaño de la ventana en un 10% para la próxima iteración, vas haciendo mas chica las ventanas, siempre el con mas fitness va a estar siempre
         ventana_actual = max(1, int(ventana_actual * 0.9))  # Asegura que el tamaño sea al menos 1 y entero
 
     return seleccionados
 
-# Función de cruce (crossover) que genera dos hijos por cada par de padres
+
+#---------------------CRUCE----------------------------------
+# Función de cruce que genera dos hijos por cada par de padres
 def cruce(padre1, padre2):
     # Elige un punto de corte aleatorio (ignora el bit de signo)
-    punto_corte = np.random.randint(1, len(padre1[0])-1)
-    # Hijo 1: parte inicial de padre1 (sin el bit de signo) + parte final de padre2
+    punto_corte = np.random.randint(1, len(padre1[0])-1)  
+    # Hijo 1: parte inicial de padre1  + parte final de padre2
     hijo1 = np.concatenate((padre1[0][0:punto_corte], padre2[0][punto_corte:]))
-   
-   # Hijo 2: parte inicial de padre2 (sin el bit de signo) + parte final de padre1
+    
+    # Hijo 2: parte inicial de padre2 + parte final de padre1
     hijo2 = np.concatenate((padre2[0][0:punto_corte], padre1[0][punto_corte:]))
-   
+
     return [hijo1, []], [hijo2, []]
 
+
+#---------------------MUTACION----------------------------------
 # Función de mutación para aplicar mutaciones a los individuos
 def mutacion(individuo, prob_mutacion):
     # Recorre todos los bits del individuo
     for i in range(len(individuo[0])):
         # Aplica mutación con la probabilidad dada
         if np.random.rand() < prob_mutacion:
-            # Cambia el bit (0 a 1 o 1 a 0)
             individuo[0][i] = 1 - individuo[0][i]
     return individuo
+
+
+
+
+#---------------------INICIALIZACION DEL ALGORITMO
 
 # Parámetros del algoritmo genético
 cant_bits = 10          # Número de bits que representa a cada individuo
@@ -122,7 +122,7 @@ for i in range(tam_poblacion):
     individuo = np.random.randint(0, 2, cant_bits)  # Genera un individuo aleatorio
     poblacion.append([individuo, []])  # Guarda el individuo y un espacio para su fitness
 
-# Evalúa la población inicial
+#Agregar a la poblacion para cada individuo su funcion de fitnes
 evaluar_poblacion(poblacion)
 
 # Bucle de generaciones
@@ -142,7 +142,7 @@ for generacion in range(generaciones):
     #seleccionados = seleccion_por_ventanas(poblacion, 10)
 
     nueva_poblacion = []
-    # Realiza el cruce de los padres seleccionados
+    # Realiza el cruce de los padres seleccionados, voy pasando de a dos, porque tengo dos padres
     for i in range(0, len(seleccionados), 2):
         padre1 = seleccionados[i]
         padre2 = seleccionados[i + 1]
@@ -161,19 +161,20 @@ for generacion in range(generaciones):
     # Reemplaza la población anterior con la nueva
     poblacion = nueva_poblacion
 
-    # Evalúa la nueva población
+    # Evalúa la nueva población, es decir le carga su funcion de fitness a cada individuo
     evaluar_poblacion(poblacion)
 
-# Al final, obtenemos el mejor individuo
+# Al final, tenemos el mejor individuo
+print("---------------------------------------")
 mejor_individuo = min(poblacion, key=lambda x: x[1])
 print("Mejor individuo FINAL: ", mejor_individuo[0]) 
 print("Valor decimal FINAL: ", bin2dec(mejor_individuo[0][1:])) 
 print("Fitness FINAL: ", mejor_individuo[1])
 
-#-------------------------------------------------------------
+#---------------------CALCULAR CON EL GRADIENTE----------------------------------------
 
 
-
+#La derivada segun google es asi
 def derivada_funcion_objetivo(x):
     if x == 0:
         return 0  # La derivada en x=0 puede ser considerada 0
@@ -191,15 +192,14 @@ def gradiente_descendente(x_inicial, tasa_aprendizaje, max_iteraciones):
 
         # Actualiza la posición
         x_nuevo = x_actual - tasa_aprendizaje * gradiente
-        
-
-
+    
         # Actualiza la posición actual
         x_actual = x_nuevo
     
     return x_actual, funcion_objetivo(x_actual)
 
 # Parámetros del algoritmo
+#Depende donde inicies x_inicial es en el minimo local que cae
 x_inicial = 100         # Valor inicial
 tasa_aprendizaje = 0.01 # Tasa de aprendizaje
 max_iteraciones = 1000    # Número máximo de iteraciones
@@ -207,10 +207,24 @@ max_iteraciones = 1000    # Número máximo de iteraciones
 #Se llama a la funcion gradidente, igual siempre cae en minimos locales y no llega al global
 resultado = gradiente_descendente(x_inicial, tasa_aprendizaje, max_iteraciones)
 
+print("---------------------------------------")
 # Mostramos el resultado final
-print("Resultado final:")
+print("Resultado final del gradiente:")
 print("x mínimo:", resultado[0])
 print("Valor mínimo de la función:", resultado[1])
+print("---------------------------------------")
 
 
 
+#------------------------GRAFICAR LA FUNCION------------------------------------------------------
+# Genera un rango de valores de -512 a 512 para graficar la función objetivo
+x1 = np.linspace(-512, 512, 1000)
+f1 = funcion_objetivo(x1)
+# Grafica la función objetivo para ver cómo se comporta
+plt.figure()
+plt.plot(x1, f1)
+plt.title("Función objetivo")
+plt.xlabel("x")
+plt.ylabel("f(x)")
+plt.grid()
+plt.show()
