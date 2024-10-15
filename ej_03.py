@@ -1,6 +1,6 @@
 import numpy as np
-import random  # Importamos el módulo random de Python
-
+import random  
+import matplotlib.pyplot as plt
 
 #Pasar binario a decimal
 #def bin2dec(x):
@@ -14,7 +14,7 @@ def funcion_objetivo(x):
 # Evalúa cada individuo en la población, donde cada individuo es un arreglo binario, es decir le carga su correspondiente fitness al individuo
 def evaluar_poblacion(poblacion):
     for i in range(len(poblacion)):
-        poblacion[i][1] = -1 * funcion_objetivo(i)
+        poblacion[i][1] = funcion_objetivo(poblacion[i][0])
 
 
 #---------------------SELECCION POR COMPETENCIA----------------------------------
@@ -36,10 +36,11 @@ def seleccion_por_competencia(poblacion, k):
 
         # Selecciona los dos mejores individuos
         seleccionados.append(competidores_ordenados[0])
-        seleccionados.append(competidores_ordenados[1])
+     
 
     # Devuelve la lista de seleccionados
     return seleccionados
+
 
 
 #---------------------SELECCION POR VENTANA----------------------------------
@@ -55,20 +56,19 @@ def seleccion_por_ventanas(poblacion, num_ventanas):
     tam_ventana_inicial = int(tam_poblacion / num_ventanas)
     
     
-    ventana_actual = tam_ventana_inicial
-  
-
-    # Repite para cada ventana
-    for i in range(num_ventanas):
-        # Define los límites de la ventana actual en la población ordenada
-        ventana = poblacion_ordenada[0:ventana_actual]
-
-        # Selecciona aleatoriamente un individuo de esta ventana
-        seleccionado = random.choice(ventana)
-        seleccionados.append(seleccionado)
-        
-        #Reduce el tamaño de la ventana en un 10% para la próxima iteración, vas haciendo mas chica las ventanas, siempre el con mas fitness va a estar siempre
-        ventana_actual = max(1, int(ventana_actual * 0.9))  # Asegura que el tamaño sea al menos 1 y entero
+    while len(seleccionados) < tam_poblacion:
+        ventana_actual = tam_ventana_inicial    
+        # Repite para cada ventana
+        for i in range(num_ventanas):
+            # Define los límites de la ventana actual en la población ordenada
+            ventana = poblacion_ordenada[0:ventana_actual]
+    
+            # Selecciona aleatoriamente un individuo de esta ventana
+            seleccionado = random.choice(ventana)
+            seleccionados.append(seleccionado)
+            
+            #Reduce el tamaño de la ventana en un 10% para la próxima iteración, vas haciendo mas chica las ventanas, siempre el con mas fitness va a estar siempre
+            ventana_actual = max(1, int(ventana_actual * 0.9))  # Asegura que el tamaño sea al menos 1 y entero
 
     return seleccionados
 
@@ -109,7 +109,7 @@ tam_poblacion = 100  # Tamaño de la población
 cant_caracteristicas = 7129  # Cantidad de características
 rango_min = -26775  # Valor mínimo de los decimales (Hice min en el exel)
 rango_max = 71369   # Valor máximo de los decimales (Hice max en el exel)
-generaciones = 100     # Número de generaciones
+generaciones = 10     # Número de generaciones
 prob_mutacion = 0.001   # Probabilidad de mutación
 
 poblacion = []
@@ -121,14 +121,17 @@ for i in range(tam_poblacion):
 
 
 
-
-
-
 #Agregar a la poblacion para cada individuo su funcion de fitnes
 evaluar_poblacion(poblacion)
 
-# Bucle de generaciones
-for generacion in range(generaciones):
+mejores_fitness=[]
+
+generacion=0
+
+# Ciclo de generaciones
+while generacion < generaciones :
+    
+    generacion=generacion+1
     
     print("Generacion: ", generacion)
     mejor_individuo = min(poblacion, key=lambda x: x[1])
@@ -164,6 +167,10 @@ for generacion in range(generaciones):
 
     # Evalúa la nueva población, es decir le carga su funcion de fitness a cada individuo
     evaluar_poblacion(poblacion)
+    
+    mejores_fitness.append(mejor_individuo[1])
+    
+    
 
 # Al final, tenemos el mejor individuo
 print("---------------------------------------")
@@ -174,5 +181,8 @@ print("Fitness FINAL: ", mejor_individuo[1])
 
 
 
+plt.figure()
+plt.plot(mejores_fitness)
+plt.title("Evolucion del fitness")
 
 

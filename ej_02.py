@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.optimize import minimize
+import random 
 
 # Convierte un arreglo binario en un número decimal
 def bin2dec(x):
@@ -28,8 +29,8 @@ def evaluar_poblacion(poblacion):
         if poblacion[i][1][0] == 1:
             ind_decY = -ind_decY
             
-        # Asigna el valor de la función fitness (invertido para minimizar)
-        poblacion[i][2] = -funcion_objetivo(ind_decX, ind_decY)
+        # Asigna el valor de la función fitness 
+        poblacion[i][2] = funcion_objetivo(ind_decX, ind_decY)
 
 
 #---------------------SELECCION POR COMPETENCIA----------------------------------
@@ -51,9 +52,38 @@ def seleccion_por_competencia(poblacion, k):
         
         # Selecciona los dos mejores
         seleccionados.append(competidores_ordenados[0])
-        seleccionados.append(competidores_ordenados[1])
     
     return seleccionados #Retorna los seleccionados
+
+
+#---------------------SELECCION POR VENTANA----------------------------------
+# Selección por ventanas: divide la población en ventanas y selecciona un individuo de cada ventana
+def seleccion_por_ventanas(poblacion, num_ventanas):
+    # Ordenar la población según su fitness de menor a mayor (para minimizar)
+    poblacion_ordenada = sorted(poblacion, key=lambda x: x[1])
+
+    seleccionados = []
+    tam_poblacion = len(poblacion)
+
+    # Define el tamaño de la primera ventana
+    tam_ventana_inicial = int(tam_poblacion / num_ventanas)
+    
+    
+    while len(seleccionados) < tam_poblacion:
+        ventana_actual = tam_ventana_inicial    
+        # Repite para cada ventana
+        for i in range(num_ventanas):
+            # Define los límites de la ventana actual en la población ordenada
+            ventana = poblacion_ordenada[0:ventana_actual]
+    
+            # Selecciona aleatoriamente un individuo de esta ventana
+            seleccionado = random.choice(ventana)
+            seleccionados.append(seleccionado)
+            
+            #Reduce el tamaño de la ventana en un 10% para la próxima iteración, vas haciendo mas chica las ventanas, siempre el con mas fitness va a estar siempre
+            ventana_actual = max(1, int(ventana_actual * 0.9))  # Asegura que el tamaño sea al menos 1 y entero
+
+    return seleccionados
 
 
 #---------------------CRUCE---------------------------------------------------
@@ -106,10 +136,33 @@ for i in range(tam_poblacion):
 # Evalúa la población inicial
 evaluar_poblacion(poblacion)
 
+
+mejores_fitness=[]
+
+
+
+generacion=0
+
 # Ciclo de generaciones
-for generacion in range(generaciones):
+while generacion < generaciones :
+    
+    generacion=generacion+1
+    
+    print("Generacion: ", generacion)
+    mejor_individuo = min(poblacion, key=lambda x: x[2])
+    print("Mejor individuo:", mejor_individuo[0]) 
+    print("Valor decimal x:", bin2dec(mejor_individuo[0][1:])) 
+    print("Valor decimal y:", bin2dec(mejor_individuo[1][1:])) 
+    print("Fitness:", mejor_individuo[2])
+    
+    
     # Selección de padres con selección por competencia
-    seleccionados = seleccion_por_competencia(poblacion, k=3)
+    seleccionados = seleccion_por_competencia(poblacion, k=10)
+    
+    
+    
+    # Selección de padres utilizando selección por ventanas
+    #seleccionados = seleccion_por_ventanas(poblacion, 10)
 
     nueva_poblacion = []
     # Itera de a dos en seleccionados, así tengo los dos padres
@@ -133,6 +186,12 @@ for generacion in range(generaciones):
 
     # Evalúa la nueva población, es decir le agrego su fitness a cada nuevo individuo
     evaluar_poblacion(poblacion)
+    mejores_fitness.append(mejor_individuo[2])
+    
+    
+
+    
+    
 
 # Se obtiene el mejor individuo
 print("---------------------------------------")
@@ -226,3 +285,8 @@ ax.set_ylabel('Y')
 ax.set_zlabel('f(X, Y)')
 
 plt.show()
+
+
+plt.figure()
+plt.plot(mejores_fitness)
+plt.title("Evolucion del fitness")
