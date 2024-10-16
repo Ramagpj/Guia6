@@ -64,25 +64,19 @@ def seleccion_por_ventanas(poblacion, num_ventanas):
 
     seleccionados = []
     tam_poblacion = len(poblacion)
+ 
+    #Se hace una ventana igual al tamaño de la poblacion
+    tam_ventana = int(tam_poblacion)
+    #Se recorre segun la cantidad de ventanas
+    for i in range(num_ventanas):
+        #Para cada ventana se toma un cantidad de individuos random del 10% de la poblacion total
+        for j in range (int(tam_poblacion*0.1)):
+          seleccionados.append(random.choice(poblacion_ordenada[0:tam_ventana]))
+          
+         
 
-    # Define el tamaño de la primera ventana
-    tam_ventana_inicial = tam_poblacion
-    
-    
-    while len(seleccionados) < tam_poblacion:
-        ventana_actual = tam_ventana_inicial    
-        # Repite para cada ventana
-        for i in range(num_ventanas):
-            # Define los límites de la ventana actual en la población ordenada
-            ventana = poblacion_ordenada[0:ventana_actual]
-    
-            # Selecciona aleatoriamente un individuo de esta ventana
-            seleccionado = random.choice(ventana)
-            seleccionados.append(seleccionado)
-            
-            #Reduce el tamaño de la ventana en un 10% para la próxima iteración, vas haciendo mas chica las ventanas, siempre el con mas fitness va a estar siempre
-            ventana_actual = max(1, int(ventana_actual * 0.9))  # Asegura que el tamaño sea al menos 1 y entero
-
+        #Al tamaño de la ventana la reduzco un 10 porciento
+        tam_ventana = int(tam_ventana - tam_poblacion*0.1) 
     return seleccionados
 
 
