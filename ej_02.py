@@ -60,13 +60,13 @@ def seleccion_por_competencia(poblacion, k):
 # Selección por ventanas: divide la población en ventanas y selecciona un individuo de cada ventana
 def seleccion_por_ventanas(poblacion, num_ventanas):
     # Ordenar la población según su fitness de menor a mayor (para minimizar)
-    poblacion_ordenada = sorted(poblacion, key=lambda x: x[1])
+    poblacion_ordenada = sorted(poblacion, key=lambda x: x[2])
 
     seleccionados = []
     tam_poblacion = len(poblacion)
 
     # Define el tamaño de la primera ventana
-    tam_ventana_inicial = int(tam_poblacion / num_ventanas)
+    tam_ventana_inicial = tam_poblacion
     
     
     while len(seleccionados) < tam_poblacion:
@@ -157,12 +157,12 @@ while generacion < generaciones :
     
     
     # Selección de padres con selección por competencia
-    seleccionados = seleccion_por_competencia(poblacion, k=10)
+    #seleccionados = seleccion_por_competencia(poblacion, k=10)
     
     
     
     # Selección de padres utilizando selección por ventanas
-    #seleccionados = seleccion_por_ventanas(poblacion, 10)
+    seleccionados = seleccion_por_ventanas(poblacion, 10)
 
     nueva_poblacion = []
     # Itera de a dos en seleccionados, así tengo los dos padres

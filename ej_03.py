@@ -53,7 +53,7 @@ def seleccion_por_ventanas(poblacion, num_ventanas):
     tam_poblacion = len(poblacion)
 
     # Define el tamaño de la primera ventana
-    tam_ventana_inicial = int(tam_poblacion / num_ventanas)
+    tam_ventana_inicial = tam_poblacion
     
     
     while len(seleccionados) < tam_poblacion:
