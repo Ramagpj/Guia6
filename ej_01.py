@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import random 
 
 
-#Pasar binario a decimal
+#Pasar un arreglo binario a un numero decimal
 def bin2dec(x):
     return int(''.join(map(lambda x: str(int(x)), x)), 2)
 
@@ -29,11 +29,11 @@ def evaluar_poblacion(poblacion):
 # Selección por competencia: selecciona los mejores K individuos de la población
 def seleccion_por_competencia(poblacion, k):
     seleccionados = []
-    competidores=[]
     tam_poblacion = len(poblacion)
 
     # Continua seleccionando hasta llenar el número de individuos de la población original
     while len(seleccionados) < tam_poblacion:
+        competidores=[]
         # Selecciona aleatoriamente k competidores de la población
         indices_competidores = np.random.choice(len(poblacion), k, replace=False)
         for i in indices_competidores:
@@ -44,7 +44,7 @@ def seleccion_por_competencia(poblacion, k):
 
         # Selecciona al mejor individuo de esos K individuos seleccionados
         seleccionados.append(competidores_ordenados[0])
-     
+    
 
     # Devuelve la lista de seleccionados
     return seleccionados
@@ -101,7 +101,9 @@ def mutacion(individuo, prob_mutacion):
 
 
 
-#---------------------INICIALIZACION DEL ALGORITMO
+# =============================================================================
+#                           INICIO DEL ALGORITMO
+# =============================================================================
 
 # Parámetros del algoritmo genético
 cant_bits = 10          # Número de bits que representa a cada individuo
@@ -121,7 +123,6 @@ evaluar_poblacion(poblacion)
 
 
 mejores_fitness=[]
-
 mejor_fitness = -np.inf
 paciencia_contador=0
 
@@ -129,6 +130,7 @@ paciencia_contador=0
 # Bucle de generaciones
 while generacion < generaciones and paciencia_contador<10:
     generacion=generacion+1
+    print("---------------------------------------")
     print("Generacion: ", generacion)
     mejor_individuo = min(poblacion, key=lambda x: x[1])
     print("Mejor individuo:", mejor_individuo[0]) 
@@ -137,10 +139,10 @@ while generacion < generaciones and paciencia_contador<10:
     
 
     #Seleccion de padres utilizando competencia con k =3
-    #seleccionados = seleccion_por_competencia(poblacion, 3)
+    seleccionados = seleccion_por_competencia(poblacion, 3)
     
     # Selección de padres utilizando selección por ventanas
-    seleccionados = seleccion_por_ventanas(poblacion, 10)
+    #seleccionados = seleccion_por_ventanas(poblacion, 10)
 
     nueva_poblacion = []
     # Realiza el cruce de los padres seleccionados, voy pasando de a dos, porque tengo dos padres
@@ -179,6 +181,8 @@ while generacion < generaciones and paciencia_contador<10:
 
 # Al final, tenemos el mejor individuo
 print("---------------------------------------")
+print(" ")
+print("----------RESULTADO FINAL-----------------------------")
 mejor_individuo = min(poblacion, key=lambda x: x[1])
 print("Mejor individuo FINAL: ", mejor_individuo[0]) 
 print("Valor decimal FINAL: ", bin2dec(mejor_individuo[0][1:])) 
@@ -215,7 +219,7 @@ def gradiente_descendente(x_inicial, tasa_aprendizaje, max_iteraciones):
 #Depende donde inicies x_inicial es en el minimo local que cae
 x_inicial = 100         # Valor inicial
 tasa_aprendizaje = 0.01 # Tasa de aprendizaje
-max_iteraciones = 1000    # Número máximo de iteraciones
+max_iteraciones = 3000    # Número máximo de iteraciones
 
 #Se llama a la funcion gradidente, igual siempre cae en minimos locales y no llega al global
 resultado = gradiente_descendente(x_inicial, tasa_aprendizaje, max_iteraciones)

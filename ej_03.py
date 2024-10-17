@@ -1,76 +1,94 @@
 import numpy as np
-import random  
+from sklearn.metrics import accuracy_score
+from sklearn.svm import SVC
 import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier
 
-#Pasar binario a decimal
-#def bin2dec(x):
-#    return int(''.join(map(lambda x: str(int(x)), x)), 2)
+train_data = np.loadtxt("leukemia_train.csv", delimiter=',')
+test_data = np.loadtxt("leukemia_test.csv", delimiter=',')
 
-# Función objetivo o fitness que estamos evaluando. 
-def funcion_objetivo(x):
-    return np.sum(x) #Ni idea, sumar todo?
+caract_totales = 7129
 
-#---------------------FUNCION DE EVALUACION, FITNESS PARA CADA INDIVIDUO--------
-# Evalúa cada individuo en la población, donde cada individuo es un arreglo binario, es decir le carga su correspondiente fitness al individuo
+X_trn_orig = train_data[:,0:caract_totales]
+y_trn_orig = train_data[:,-1]
+X_tst_orig = test_data[:,0:caract_totales]
+y_tst_orig = test_data[:,-1]
+
+
+# =============================================================================
+# el genoma sera una cadena de la cantidad de bits igual a la cantidad de caracteristicas
+# si hay un 0, no toma esa caracteristica
+# si hay un 1, toma esa caracteristica
+# el individuo sera un arreglo que en la posicion 0 tendra el genoma y en la posicion 1 el fitness
+# =============================================================================
+def fitness(individuo):
+    #Configuracion del clasificador
+    model = SVC(kernel='linear')
+    #model = DecisionTreeClassifier(random_state=42)
+
+    X_trn = []
+    y_trn = y_trn_orig
+    X_tst = []
+    y_tst = y_tst_orig
+    
+    for gen in range(len(individuo)):
+        if individuo[gen] == 1:
+            X_trn.append(X_trn_orig[:,gen]) #agrego las caracteristicas correspondientes a X_trn y X_tst
+            X_tst.append(X_tst_orig[:,gen])
+    X_trn = np.array(X_trn).T
+    X_tst = np.array(X_tst).T
+    
+    #entreno el modelo
+    model.fit(X_trn, y_trn)
+    
+    # Prediccion en la prueba
+    y_tst_pred = model.predict(X_tst)
+    
+    
+    # == OPCION 1 DE FITNESS: solo tiene en cuenta el accuracy ==
+    # accuracy = accuracy_score(y_tst, y_tst_pred)
+    # fitness = accuracy
+    
+    # == OPCION 2 DE FITNESS: ademas del accuracy, cuanto menos caracteristicas seleccione mejor
+    accuracy = accuracy_score(y_tst, y_tst_pred)
+    coef_cant = 0.001
+    coef_accuracy = 1
+    fitness = coef_accuracy*accuracy - coef_cant*np.sum(individuo == 1)
+    
+    return fitness
+
+
 def evaluar_poblacion(poblacion):
-    for i in range(len(poblacion)):
-        poblacion[i][1] = funcion_objetivo(poblacion[i][0])
-
-
+    for n_individuo in range(len(poblacion)):
+        # if n_individuo % 50 == 0:
+        #     print("Eval. ind:", n_individuo)
+        individuo = poblacion[n_individuo][0]
+        poblacion[n_individuo][1] = fitness(individuo)
+        
+    
 #---------------------SELECCION POR COMPETENCIA----------------------------------
 # Selección por competencia: selecciona los mejores K individuos de la población
 def seleccion_por_competencia(poblacion, k):
     seleccionados = []
-    competidores=[]
     tam_poblacion = len(poblacion)
 
     # Continua seleccionando hasta llenar el número de individuos de la población original
     while len(seleccionados) < tam_poblacion:
+        competidores=[]
         # Selecciona aleatoriamente k competidores de la población
         indices_competidores = np.random.choice(len(poblacion), k, replace=False)
         for i in indices_competidores:
             competidores.append(poblacion[i])
 
-        # Ordena los competidores por su fitness (el mejor al principio)
-        competidores_ordenados = sorted(competidores, key=lambda x: x[1])
-
-        # Selecciona los dos mejores individuos
-        seleccionados.append(competidores_ordenados[0])
-     
-
-    # Devuelve la lista de seleccionados
-    return seleccionados
-
-
-
-#---------------------SELECCION POR VENTANA----------------------------------
-# Selección por ventanas: divide la población en ventanas y selecciona un individuo de cada ventana
-def seleccion_por_ventanas(poblacion, num_ventanas):
-    # Ordenar la población según su fitness de menor a mayor (para minimizar)
-    poblacion_ordenada = sorted(poblacion, key=lambda x: x[1])
-
-    seleccionados = []
-    tam_poblacion = len(poblacion)
- 
-    #Se hace una ventana igual al tamaño de la poblacion
-    tam_ventana = int(tam_poblacion)
-    #Se recorre segun la cantidad de ventanas
-    for i in range(num_ventanas):
-        #Para cada ventana se toma un cantidad de individuos random del 10% de la poblacion total
-        for j in range (int(tam_poblacion*0.1)):
-          seleccionados.append(random.choice(poblacion_ordenada[0:tam_ventana]))
-          
-         
-       
-        #Al tamaño de la ventana la reduzco un 10 porciento
-        tam_ventana = int(tam_ventana - tam_poblacion*0.1) 
+        # Selecciona el mejor individuo basandose en el max fitness
+        seleccionados.append(max(competidores,key=lambda x: x[1]))
     return seleccionados
 
 #---------------------CRUCE----------------------------------
 # Función de cruce que genera dos hijos por cada par de padres
 def cruce(padre1, padre2):
-    # Elige un punto de corte aleatorio (ignora el bit de signo)
-    punto_corte = np.random.randint(1, len(padre1[0])-1)  
+    # Elige un punto de corte aleatorio
+    punto_corte = np.random.randint(0, len(padre1[0])-1)   #si quiero ignorar el bit de signo pongo 1
     # Hijo 1: parte inicial de padre1  + parte final de padre2
     hijo1 = np.concatenate((padre1[0][0:punto_corte], padre2[0][punto_corte:]))
     
@@ -93,51 +111,81 @@ def mutacion(individuo, prob_mutacion):
 
 
 
-#---------------------INICIALIZACION DEL ALGORITMO
+# = FUNCION AUXILIAR =
+# = Para ir monitoreando el accuracy en el metodo de fitness 2 =
+def evaluar_accuracy(individuo):
+    model = SVC(kernel='linear')
+    X_trn = []
+    y_trn = y_trn_orig
+    X_tst = []
+    y_tst = y_tst_orig
+    
+    for gen in range(len(individuo)):
+        if individuo[gen] == 1:
+            X_trn.append(X_trn_orig[:,gen]) #agrego las caracteristicas correspondientes a X_trn y X_tst
+            X_tst.append(X_tst_orig[:,gen])
+    X_trn = np.array(X_trn).T
+    X_tst = np.array(X_tst).T
+    
+    #entreno el modelo
+    model.fit(X_trn, y_trn)
+    
+    # Prediccion en la prueba
+    y_tst_pred = model.predict(X_tst)
+    
+    accuracy = accuracy_score(y_tst, y_tst_pred)
+    return accuracy
+# =================
 
 
 
-# Parámetros del algoritmo genético
-tam_poblacion = 100  # Tamaño de la población
-cant_caracteristicas = 7129  # Cantidad de características
-rango_min = -26775  # Valor mínimo de los decimales (Hice min en el exel)
-rango_max = 71369   # Valor máximo de los decimales (Hice max en el exel)
-generaciones = 10     # Número de generaciones
+
+# =============================================================================
+#                           INICIO DEL ALGORITMO
+# =============================================================================
+# Parametros
+tam_poblacion = 30
 prob_mutacion = 0.001   # Probabilidad de mutación
+paciencia = 300
+max_gen = 5000
+# ----------
 
+# Inicialización de la población con individuos aleatorios
 poblacion = []
-
 for i in range(tam_poblacion):
-    # Genera un individuo aleatorio con valores decimales en cada característica
-    individuo = np.random.uniform(rango_min, rango_max, cant_caracteristicas)
+    individuo = np.random.randint(0, 2, caract_totales)  # Genera un individuo aleatorio
     poblacion.append([individuo, []])  # Guarda el individuo y un espacio para su fitness
 
 
+paciencia_contador = 0
+mejor_fitness = -np.inf
+generacion = 0
+mejores_fitness = []
+mejores_accuracy = []
 
-#Agregar a la poblacion para cada individuo su funcion de fitnes
-evaluar_poblacion(poblacion)
-
-mejores_fitness=[]
-
-generacion=0
-
-# Ciclo de generaciones
-while generacion < generaciones :
+while paciencia_contador < paciencia and generacion < max_gen:
     
-    generacion=generacion+1
-    
-    print("Generacion: ", generacion)
-    mejor_individuo = min(poblacion, key=lambda x: x[1])
-    print("Mejor individuo:", mejor_individuo[0]) 
+    print("\n==== GENERACION ",generacion," ===")
+    evaluar_poblacion(poblacion)
+    mejor_individuo = max(poblacion, key=lambda x: x[1])
+    print("Mejor individuo:", mejor_individuo[0])
+    print("Cantidad de caracteristicas:", np.sum(mejor_individuo[0] == 1))
+    accuracy = evaluar_accuracy(mejor_individuo[0])
+    print("Accuracy:", accuracy)
+    mejores_accuracy.append(accuracy)
     print("Fitness:", mejor_individuo[1])
+    mejores_fitness.append(mejor_individuo[1])
     
-
+    print("Contador de paciencia:", paciencia_contador)
+    if mejor_individuo[1] > mejor_fitness:
+        mejor_fitness = mejor_individuo[1]
+        paciencia_contador = 0  # Reinicia el contador de paciencia si hay mejora
+    else:
+        paciencia_contador += 1  # Incrementa el contador si no hay mejora
+    
     #Seleccion de padres utilizando competencia con k =3
-    #seleccionados = seleccion_por_competencia(poblacion, 3)
+    seleccionados = seleccion_por_competencia(poblacion, 3)
     
-    # Selección de padres utilizando selección por ventanas
-    seleccionados = seleccion_por_ventanas(poblacion, 10)
-
     nueva_poblacion = []
     # Realiza el cruce de los padres seleccionados, voy pasando de a dos, porque tengo dos padres
     for i in range(0, len(seleccionados), 2):
@@ -157,25 +205,13 @@ while generacion < generaciones :
 
     # Reemplaza la población anterior con la nueva
     poblacion = nueva_poblacion
-
-    # Evalúa la nueva población, es decir le carga su funcion de fitness a cada individuo
-    evaluar_poblacion(poblacion)
-    
-    mejores_fitness.append(mejor_individuo[1])
-    
-    
-
-# Al final, tenemos el mejor individuo
-print("---------------------------------------")
-mejor_individuo = min(poblacion, key=lambda x: x[1])
-print("Mejor individuo FINAL: ", mejor_individuo[0]) 
-print("Fitness FINAL: ", mejor_individuo[1])
-
-
-
+    generacion += 1
 
 plt.figure()
 plt.plot(mejores_fitness)
 plt.title("Evolucion del fitness")
 
+plt.figure()
+plt.plot(mejores_accuracy)
+plt.title("Evolucion del accuracy")
 

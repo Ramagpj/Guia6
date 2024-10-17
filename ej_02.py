@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from scipy.optimize import minimize
 import random 
 
 # Convierte un arreglo binario en un número decimal
@@ -14,7 +12,7 @@ def funcion_objetivo(x, y):
 
 
 
-#---------------------FUNCION DE EVALUACION, FITNESS PARA CADA INDIVIDUO--------
+#---------------FUNCION DE EVALUACION, FITNESS PARA CADA INDIVIDUO--------
 # Evalúa cada individuo en la población
 def evaluar_poblacion(poblacion):
     for i in range(len(poblacion)):
@@ -38,14 +36,13 @@ def evaluar_poblacion(poblacion):
 def seleccion_por_competencia(poblacion, k):
     seleccionados = []
     tam_poblacion = len(poblacion)
-    competidores=[]
+    
     while len(seleccionados) < tam_poblacion:
         # Selecciona k competidores de los índices de la población
-    
+        competidores=[]
         indices_competidores = np.random.choice(len(poblacion), k, replace=False)
         for i in indices_competidores:
             competidores.append(poblacion[i])
-        
         
         # Ordena los competidores por su fitness
         competidores_ordenados = sorted(competidores, key=lambda x: x[2])
@@ -72,9 +69,6 @@ def seleccion_por_ventanas(poblacion, num_ventanas):
         #Para cada ventana se toma un cantidad de individuos random del 10% de la poblacion total
         for j in range (int(tam_poblacion*0.1)):
           seleccionados.append(random.choice(poblacion_ordenada[0:tam_ventana]))
-          
-         
-
         #Al tamaño de la ventana la reduzco un 10 porciento
         tam_ventana = int(tam_ventana - tam_poblacion*0.1) 
     return seleccionados
@@ -109,11 +103,17 @@ def mutacion(individuo, prob_mutacion):
         # Si ocurre la mutación (con probabilidad prob_mutacion)
         if np.random.rand() < prob_mutacion:  
             individuo[0][i] = 1 - individuo[0][i]  # Cambia el bit en x
+            
+        if np.random.rand() < prob_mutacion:  
             individuo[1][i] = 1 - individuo[1][i]  # Cambia el bit en y
+            
     return individuo
 
 
-#---------------------INICIALIZACION DEL ALGORITMO----------------------------
+# =============================================================================
+#                           INICIO DEL ALGORITMO
+# =============================================================================
+
 # Parámetros del algoritmo genético
 cant_bits = 8  # Número de bits que representa a cada individuo
 tam_poblacion = 100  # Tamaño de la población
@@ -132,31 +132,33 @@ evaluar_poblacion(poblacion)
 
 
 mejores_fitness=[]
-
-
-
+mejor_fitness = -np.inf
 generacion=0
+paciencia_contador=0
 
 # Ciclo de generaciones
-while generacion < generaciones :
+while generacion < generaciones and paciencia_contador<10 :
     
     generacion=generacion+1
-    
+    print("---------------------------------------")
     print("Generacion: ", generacion)
     mejor_individuo = min(poblacion, key=lambda x: x[2])
     print("Mejor individuo:", mejor_individuo[0]) 
+    
+    print("Signo x:", (mejor_individuo[0][0])) 
     print("Valor decimal x:", bin2dec(mejor_individuo[0][1:])) 
+    
+    print("Signo y:", (mejor_individuo[1][0]))
     print("Valor decimal y:", bin2dec(mejor_individuo[1][1:])) 
+   
     print("Fitness:", mejor_individuo[2])
     
     
     # Selección de padres con selección por competencia
-    #seleccionados = seleccion_por_competencia(poblacion, k=10)
-    
-    
+    seleccionados = seleccion_por_competencia(poblacion, k=10)
     
     # Selección de padres utilizando selección por ventanas
-    seleccionados = seleccion_por_ventanas(poblacion, 10)
+    #seleccionados = seleccion_por_ventanas(poblacion, 10)
 
     nueva_poblacion = []
     # Itera de a dos en seleccionados, así tengo los dos padres
@@ -183,17 +185,28 @@ while generacion < generaciones :
     mejores_fitness.append(mejor_individuo[2])
     
     
+    
+    if mejor_individuo[2] > mejor_fitness:
+        mejor_fitness = mejor_individuo[2]
+        paciencia_contador = 0  # Reinicia el contador de paciencia si hay mejora
+    else:
+        paciencia_contador += 1  # Incrementa el contador si no hay mejora
 
     
     
 
 # Se obtiene el mejor individuo
 print("---------------------------------------")
+print(" ")
+print("----------RESULTADO FINAL-----------------------------")
 mejor_individuo = min(poblacion, key=lambda x: x[2])
 print("Mejor individuo:", mejor_individuo[0]) 
+print("Signo x:", (mejor_individuo[0][0]))
 print("Valor decimal X:", bin2dec(mejor_individuo[0][1:])) 
+print("Signo y:", (mejor_individuo[1][0]))
 print("Valor decimal Y:", bin2dec(mejor_individuo[1][1:])) 
 print("Fitness:", mejor_individuo[2]) 
+print(" ")
 
 
 
