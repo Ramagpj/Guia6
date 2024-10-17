@@ -11,7 +11,6 @@ def funcion_objetivo(x, y):
     return (x**2 + y**2)**0.25 * (np.sin(50 * (x**2 + y**2)**0.1)**2) + 1
 
 
-
 #---------------FUNCION DE EVALUACION, FITNESS PARA CADA INDIVIDUO--------
 # Evalúa cada individuo en la población
 def evaluar_poblacion(poblacion):

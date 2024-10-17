@@ -23,7 +23,10 @@ y_tst_orig = test_data[:,-1]
 # =============================================================================
 def fitness(individuo):
     #Configuracion del clasificador
+    #Con SVC nos baaja mas la cantidad de caracteristicas cercanas a 2000
     model = SVC(kernel='linear')
+    
+    #Con arboles de decision mas cercana a 3000 caracteristicas
     #model = DecisionTreeClassifier(random_state=42)
 
     X_trn = []
@@ -33,7 +36,8 @@ def fitness(individuo):
     
     for gen in range(len(individuo)):
         if individuo[gen] == 1:
-            X_trn.append(X_trn_orig[:,gen]) #agrego las caracteristicas correspondientes a X_trn y X_tst
+            #Si esta activado, agrego las caracteristicas correspondientes a X_trn y X_tst
+            X_trn.append(X_trn_orig[:,gen]) 
             X_tst.append(X_tst_orig[:,gen])
     X_trn = np.array(X_trn).T
     X_tst = np.array(X_tst).T
@@ -60,8 +64,6 @@ def fitness(individuo):
 
 def evaluar_poblacion(poblacion):
     for n_individuo in range(len(poblacion)):
-        # if n_individuo % 50 == 0:
-        #     print("Eval. ind:", n_individuo)
         individuo = poblacion[n_individuo][0]
         poblacion[n_individuo][1] = fitness(individuo)
         
@@ -146,7 +148,7 @@ def evaluar_accuracy(individuo):
 # Parametros
 tam_poblacion = 30
 prob_mutacion = 0.001   # Probabilidad de mutación
-paciencia = 300
+paciencia = 10
 max_gen = 5000
 # ----------
 

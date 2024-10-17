@@ -185,6 +185,7 @@ print(" ")
 print("----------RESULTADO FINAL-----------------------------")
 mejor_individuo = min(poblacion, key=lambda x: x[1])
 print("Mejor individuo FINAL: ", mejor_individuo[0]) 
+print("Signo: ", (mejor_individuo[0][0])) 
 print("Valor decimal FINAL: ", bin2dec(mejor_individuo[0][1:])) 
 print("Fitness FINAL: ", mejor_individuo[1])
 
